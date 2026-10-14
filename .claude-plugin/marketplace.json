@@ -1,0 +1,9 @@
+{
+  "name": "mods-shazam",
+  "owner": { "name": "Paulo" },
+  "plugins": [
+    { "name": "painel-agentes", "source": "./painel-agentes" },
+    { "name": "memoria", "source": "./memoria" },
+    { "name": "planejar-executar", "source": "./planejar-executar" }
+  ]
+}

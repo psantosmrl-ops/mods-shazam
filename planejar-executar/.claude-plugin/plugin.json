@@ -1,0 +1,14 @@
+{
+  "name": "planejar-executar",
+  "version": "0.3.0",
+  "description": "O Claude planeja e um agente executa cada passo à mão no ChatGPT ou no Gemini abertos no navegador do PC, sem API",
+  "userConfig": {
+    "executor": {
+      "type": "string",
+      "title": "Quem executa os passos",
+      "description": "chatgpt, gemini, ou alternar (um passo em cada, em revezamento)",
+      "default": "chatgpt",
+      "options": ["chatgpt", "gemini", "alternar"]
+    }
+  }
+}
