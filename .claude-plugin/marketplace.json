@@ -1,9 +1,24 @@
 {
   "name": "mods-shazam",
-  "owner": { "name": "Paulo" },
+  "owner": {
+    "name": "Paulo"
+  },
   "plugins": [
-    { "name": "painel-agentes", "source": "./painel-agentes" },
-    { "name": "memoria", "source": "./memoria" },
-    { "name": "planejar-executar", "source": "./planejar-executar" }
+    {
+      "name": "painel-agentes",
+      "source": "./painel-agentes"
+    },
+    {
+      "name": "memoria",
+      "source": "./memoria"
+    },
+    {
+      "name": "planejar-executar",
+      "source": "./planejar-executar"
+    },
+    {
+      "name": "controlar-pc",
+      "source": "./controlar-pc"
+    }
   ]
 }
