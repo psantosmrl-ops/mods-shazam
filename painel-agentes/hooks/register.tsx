@@ -10,6 +10,9 @@ const atividade = atom({ plugin: 'painel-agentes', key: 'atividade' } as const, 
 const eventos = atom({ plugin: 'painel-agentes', key: 'eventos' } as const, [])
 const pausa = atom({ plugin: 'painel-agentes', key: 'pausa' } as const, { ativa: false })
 
+const hub = atom({ plugin: 'painel-agentes', key: 'hub' } as const, { online: false, pausado: false, agentes: [], eventos: [] })
+
+const HUB_URL = 'http://localhost:8000'
 const MAIN = 'principal'
 const MAX_EVENTOS = 30
 const FERRAMENTA_EVENTO = 'mcp__painel-agentes__evento'
@@ -45,6 +48,30 @@ async function atualizar($: any) {
   await update($, agentes, () => novos)
 }
 
+async function curl($: any, args: string[]): Promise<any> {
+  const r = await $.process.run(['curl.exe', '-s', '--max-time', '2', ...args], { timeoutMs: 4000 })
+  if (r.exitCode !== 0) throw new Error('hub offline')
+  return JSON.parse(String(r.stdout ?? ''))
+}
+
+async function atualizarHub($: any) {
+  try {
+    const estado = await curl($, [`${HUB_URL}/api/state`])
+    const ev = await curl($, [`${HUB_URL}/api/events?limite=5`])
+    const agentes = (estado.agents ?? []).map((a: any) => ({
+      nome: String(a.name ?? a.id),
+      status: String(a.status ?? ''),
+      tokens: Number(a.tokens_used ?? 0),
+      fila: Number(a.fila ?? 0),
+      tarefa: String(a.current_task ?? '').slice(0, 50),
+    }))
+    const eventos = (ev as any[]).map(v => `${String(v.quando).slice(11, 19)} ${v.agente || '-'} ${v.tipo} [${v.nivel}]`)
+    await update($, hub, () => ({ online: true, pausado: !!estado.paused, agentes, eventos }))
+  } catch {
+    await update($, hub, () => ({ online: false, pausado: false, agentes: [], eventos: [] }))
+  }
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register({
@@ -74,6 +101,9 @@ export const register: Register = on => {
     $.clock.every(1500, () => {
       void atualizar($).catch(() => {})
     })
+    $.clock.every(3000, () => {
+      void atualizarHub($).catch(() => {})
+    })
     return next(e)
   })
 
@@ -84,11 +114,13 @@ export const register: Register = on => {
 
   on('command.run', { command: 'pausar' }, async $ => {
     await update($, pausa, () => ({ ativa: true }))
+    void curl($, ['-X', 'POST', '-H', 'Content-Type: application/json', '-d', '{}', `${HUB_URL}/api/kill`]).catch(() => {})
     return { text: 'PAUSA GERAL ligada: as ferramentas dos agentes estão bloqueadas. Use /continuar.' }
   })
 
   on('command.run', { command: 'continuar' }, async $ => {
     await update($, pausa, () => ({ ativa: false }))
+    void curl($, ['-X', 'POST', '-H', 'Content-Type: application/json', '-d', '{"resume":true}', `${HUB_URL}/api/kill`]).catch(() => {})
     return { text: 'Pausa geral desligada.' }
   })
 
@@ -126,6 +158,7 @@ export const register: Register = on => {
     const lista = await read($, agentes)
     const log = await read($, eventos)
     const parado = (await read($, pausa)).ativa
+    const srv = await read($, hub)
     const ativ = await read($, atividade)
     const linhas = Math.max(1, ((e.viewport?.rows ?? 24) - 4) >> 1)
     const todos = [
@@ -150,6 +183,15 @@ export const register: Register = on => {
           )
         })}
         {lista.length === 0 && <Text dimColor>Nenhum subagente ainda.</Text>}
+        <Text bold>Serviço Hub ({HUB_URL}): {srv.online ? (srv.pausado ? 'online, PAUSADO' : 'online') : 'offline'}</Text>
+        {srv.agentes.map((a: any) => (
+          <Text dimColor>
+            {a.nome} [{a.status}] {a.tokens} tok, fila {a.fila} {a.tarefa}
+          </Text>
+        ))}
+        {srv.eventos.map((v: string) => (
+          <Text dimColor>{v}</Text>
+        ))}
         {log.length > 0 && <Text bold>Handoffs e eventos</Text>}
         {log.slice(-5).map((v: any) => (
           <Text dimColor>

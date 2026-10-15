@@ -1,1 +1,1 @@
-{ "name": "painel-agentes", "version": "0.2.0", "description": "Painel ao vivo com os agentes e subagentes da sessão e o que cada um faz agora", "types": "./types/index.d.ts" }
+{ "name": "painel-agentes", "version": "0.3.0", "description": "Painel ao vivo com os agentes e subagentes da sessão e o que cada um faz agora", "types": "./types/index.d.ts" }

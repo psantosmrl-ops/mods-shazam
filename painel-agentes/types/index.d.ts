@@ -4,6 +4,6 @@ export type Atividade = { texto: string; feito: boolean }
 
 declare module 'claude-code' {
   interface PluginState {
-    'painel-agentes': { agentes: Agente[]; atividade: Record<string, Atividade>; eventos: Evento[]; pausa: { ativa: boolean } }
+    'painel-agentes': { agentes: Agente[]; atividade: Record<string, Atividade>; eventos: Evento[]; pausa: { ativa: boolean }; hub: { online: boolean; pausado: boolean; agentes: any[]; eventos: string[] } }
   }
 }
